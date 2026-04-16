@@ -14,6 +14,7 @@ Poi apri nel browser:
 
 - Home discovery in stile Android 16/17 (dark glassmorphism)
 - Feed dinamico con ranking per gusto moda/design
+- Feed **live** da RSS reali con fallback multi-endpoint (diretto + proxy CORS)
 - Modalità focus e install prompt PWA
 - Fallback editoriale offline se le fonti RSS non rispondono
 
