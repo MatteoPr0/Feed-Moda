@@ -91,8 +91,13 @@ const lovesInput = document.querySelector("#lovesInput");
 const brandsInput = document.querySelector("#brandsInput");
 const avoidInput = document.querySelector("#avoidInput");
 const savePrefsBtn = document.querySelector("#savePrefsBtn");
+const navItems = [...document.querySelectorAll(".nav-item")];
 
 let deferredPrompt;
+let currentSection = "home";
+let feedItems = [...localFallback];
+let savedItems = [];
+const SAVED_ITEMS_KEY = "feed-moda:saved-items:v1";
 
 const cleanText = (html = "") =>
   html
@@ -266,10 +271,22 @@ function drawFeed(items) {
     .sort((a, b) => b.score - a.score)
     .slice(0, 18);
 
+  if (!sorted.length) {
+    feedGrid.innerHTML = `
+      <article class="card empty-state">
+        <h4>Nessun contenuto da mostrare</h4>
+        <p>Prova a cambiare sezione o aggiorna il feed.</p>
+      </article>
+    `;
+    statsLine.textContent = "Nessun contenuto disponibile per questa sezione.";
+    return;
+  }
+
   sorted.forEach((item, index) => {
     const fragment = cardTemplate.content.cloneNode(true);
     const card = fragment.querySelector(".feed-card");
     const cover = fragment.querySelector(".cover");
+    const saveBtn = fragment.querySelector(".save-btn");
 
     if (index < 3) card.classList.add("top-match");
 
@@ -291,11 +308,25 @@ function drawFeed(items) {
     const link = fragment.querySelector(".read-link");
     link.href = item.url;
 
+    const isSaved = savedItems.some((saved) => saved.url === item.url);
+    saveBtn.textContent = isSaved ? "Salvato" : "Salva";
+    if (isSaved) saveBtn.classList.add("is-saved");
+    saveBtn.addEventListener("click", () => {
+      toggleSaved(item);
+      renderCurrentSection();
+    });
+
     feedGrid.appendChild(fragment);
   });
 
+  const sectionLabel = {
+    home: "Home",
+    fashion: "Moda Uomo",
+    interior: "Interior",
+    saved: "Saved",
+  }[currentSection];
   const best = sorted[0]?.title || "Nessun risultato";
-  statsLine.textContent = `Top match: ${best}. Segnali di gusto attivi: ${TASTE_PROFILE.loves.length + TASTE_PROFILE.brands.length}.`;
+  statsLine.textContent = `${sectionLabel}: ${sorted.length} articoli. Top match: ${best}. Segnali attivi: ${TASTE_PROFILE.loves.length + TASTE_PROFILE.brands.length}.`;
 }
 
 const csvToList = (value) =>
@@ -325,6 +356,49 @@ function loadPreferences() {
   }
 }
 
+function loadSavedItems() {
+  try {
+    const stored = localStorage.getItem(SAVED_ITEMS_KEY);
+    if (!stored) return;
+    const parsed = JSON.parse(stored);
+    savedItems = Array.isArray(parsed) ? parsed.filter((item) => item?.url) : [];
+  } catch {
+    savedItems = [];
+  }
+}
+
+function persistSavedItems() {
+  localStorage.setItem(SAVED_ITEMS_KEY, JSON.stringify(savedItems));
+}
+
+function toggleSaved(item) {
+  const index = savedItems.findIndex((saved) => saved.url === item.url);
+  if (index >= 0) {
+    savedItems.splice(index, 1);
+  } else {
+    savedItems.unshift(item);
+  }
+  persistSavedItems();
+}
+
+function getItemsForSection() {
+  if (currentSection === "saved") return savedItems;
+  if (currentSection === "fashion") return feedItems.filter((item) => item.topic === "fashion");
+  if (currentSection === "interior") return feedItems.filter((item) => item.topic === "interior");
+  return feedItems;
+}
+
+function setActiveNav() {
+  navItems.forEach((item) => {
+    item.classList.toggle("active", item.dataset.section === currentSection);
+  });
+}
+
+function renderCurrentSection() {
+  setActiveNav();
+  drawFeed(getItemsForSection());
+}
+
 async function buildFeed() {
   statsLine.textContent = "Scansione fonti moda/design…";
 
@@ -335,10 +409,12 @@ async function buildFeed() {
 
     if (ok.length < 5) throw new Error("Not enough remote items");
 
-    drawFeed(ok);
+    feedItems = ok;
+    renderCurrentSection();
     statsLine.textContent = `Feed live online: ${sourcesOk}/${FEED_SOURCES.length} fonti aggiornate ora.`;
   } catch {
-    drawFeed(localFallback);
+    feedItems = [...localFallback];
+    renderCurrentSection();
     statsLine.textContent = "Modalità offline editoriale: feed curato locale (fonti remote non disponibili).";
   }
 }
@@ -375,10 +451,18 @@ savePrefsBtn.addEventListener("click", () => {
   buildFeed();
 });
 
+navItems.forEach((item) => {
+  item.addEventListener("click", () => {
+    currentSection = item.dataset.section || "home";
+    renderCurrentSection();
+  });
+});
+
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js"));
 }
 
 loadPreferences();
+loadSavedItems();
 hydratePreferenceForm();
 buildFeed();
