@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0f1115" />
+    <meta
+      name="description"
+      content="Feed Moda & Design personalizzato in stile discovery per gusti editoriali, premium e contemporanei."
+    />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon-192.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/icon-192.svg" />
+    <title>Feed Moda — Discovery</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Good taste engine</p>
+          <h1>Feed Moda</h1>
+        </div>
+        <button id="refreshBtn" class="ghost-btn" aria-label="Aggiorna feed">Aggiorna</button>
+      </header>
+
+      <section class="hero card">
+        <div>
+          <p class="chip">Android 16/17 inspired</p>
+          <h2>Discovery su misura per moda & design</h2>
+          <p>
+            Mix intelligente tra pezzi wow, basi furbe, brand iconici e alternative accessibili.
+          </p>
+        </div>
+        <div class="hero-actions">
+          <button id="toggleModeBtn" class="primary-btn">Modalità focus</button>
+          <button id="installBtn" class="ghost-btn" hidden>Installa app</button>
+        </div>
+      </section>
+
+      <section class="section-head">
+        <h3>Per te adesso</h3>
+        <p id="statsLine">Analisi gusti in corso…</p>
+      </section>
+
+      <main id="feedGrid" class="feed-grid" aria-live="polite"></main>
+
+      <template id="cardTemplate">
+        <article class="feed-card card">
+          <img class="cover" alt="" loading="lazy" />
+          <div class="content">
+            <div class="meta-row">
+              <span class="source"></span>
+              <span class="score"></span>
+            </div>
+            <h4 class="title"></h4>
+            <p class="excerpt"></p>
+            <div class="tags"></div>
+            <a class="read-link" target="_blank" rel="noreferrer noopener">Apri articolo</a>
+          </div>
+        </article>
+      </template>
+
+      <nav class="bottom-nav" aria-label="Navigazione principale">
+        <button class="nav-item active">Home</button>
+        <button class="nav-item">Moda Uomo</button>
+        <button class="nav-item">Interior</button>
+        <button class="nav-item">Saved</button>
+      </nav>
+    </div>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
