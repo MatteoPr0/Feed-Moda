@@ -233,30 +233,70 @@ button {
   font-weight: 600;
 }
 
+.card-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+}
+
+.save-btn {
+  padding: 8px 12px;
+  border-radius: 10px;
+}
+
+.save-btn.is-saved {
+  border-color: rgba(90, 221, 171, 0.75);
+  color: var(--ok);
+}
+
 .bottom-nav {
   position: fixed;
-  bottom: 8px;
+  bottom: 12px;
   left: 50%;
   transform: translateX(-50%);
-  width: min(96vw, 620px);
+  width: min(96vw, 580px);
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  gap: 6px;
   padding: 8px;
-  background: rgba(15, 17, 22, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
-  backdrop-filter: blur(12px);
+  background: linear-gradient(180deg, rgba(35, 40, 54, 0.88), rgba(16, 18, 24, 0.92));
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 24px;
+  backdrop-filter: blur(16px) saturate(140%);
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .nav-item {
   background: transparent;
   color: var(--text-muted);
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 10px 8px;
+  border-radius: 16px;
+  font-size: 0.75rem;
+}
+
+.nav-icon {
+  font-size: 1rem;
+  line-height: 1;
 }
 
 .nav-item.active {
-  background: rgba(255, 255, 255, 0.12);
+  background: linear-gradient(130deg, rgba(143, 122, 255, 0.34), rgba(43, 199, 255, 0.2));
   color: var(--text);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.24);
+}
+
+.empty-state {
+  padding: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.empty-state p {
+  color: var(--text-muted);
 }
 
 body.focus-mode .feed-card:not(.top-match) {

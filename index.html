@@ -80,16 +80,31 @@
             <h4 class="title"></h4>
             <p class="excerpt"></p>
             <div class="tags"></div>
-            <a class="read-link" target="_blank" rel="noreferrer noopener">Apri articolo</a>
+            <div class="card-actions">
+              <a class="read-link" target="_blank" rel="noreferrer noopener">Apri articolo</a>
+              <button class="save-btn ghost-btn" type="button">Salva</button>
+            </div>
           </div>
         </article>
       </template>
 
       <nav class="bottom-nav" aria-label="Navigazione principale">
-        <button class="nav-item active">Home</button>
-        <button class="nav-item">Moda Uomo</button>
-        <button class="nav-item">Interior</button>
-        <button class="nav-item">Saved</button>
+        <button class="nav-item active" data-section="home" type="button">
+          <span class="nav-icon">🏠</span>
+          <span>Home</span>
+        </button>
+        <button class="nav-item" data-section="fashion" type="button">
+          <span class="nav-icon">👔</span>
+          <span>Moda Uomo</span>
+        </button>
+        <button class="nav-item" data-section="interior" type="button">
+          <span class="nav-icon">🛋️</span>
+          <span>Interior</span>
+        </button>
+        <button class="nav-item" data-section="saved" type="button">
+          <span class="nav-icon">🔖</span>
+          <span>Saved</span>
+        </button>
       </nav>
     </div>
 
