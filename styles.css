@@ -124,6 +124,48 @@ button {
   font-size: 0.9rem;
 }
 
+.prefs-card {
+  margin-bottom: 14px;
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.prefs-head p {
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.prefs-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.prefs-grid label {
+  display: grid;
+  gap: 6px;
+}
+
+.prefs-grid span {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.prefs-grid input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  color: var(--text);
+  padding: 10px;
+}
+
+.prefs-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .feed-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));

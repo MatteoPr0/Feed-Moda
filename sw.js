@@ -1,4 +1,4 @@
-const CACHE_NAME = "feed-moda-v1";
+const CACHE_NAME = "feed-moda-v2";
 const CORE_ASSETS = ["/", "/index.html", "/styles.css", "/app.js", "/manifest.webmanifest", "/icons/icon-192.svg", "/icons/icon-512.svg"];
 
 self.addEventListener("install", (event) => {

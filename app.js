@@ -5,7 +5,7 @@ const FEED_SOURCES = [
   { name: "Designboom", rss: "https://www.designboom.com/feed/", topic: "interior" },
 ];
 
-const TASTE_PROFILE = {
+const DEFAULT_TASTE_PROFILE = {
   loves: [
     "minimal",
     "relaxed",
@@ -51,6 +51,8 @@ const TASTE_PROFILE = {
   ],
   avoid: ["over logo", "hype only", "kitsch", "maximal loud", "gaudy"],
 };
+let TASTE_PROFILE = structuredClone(DEFAULT_TASTE_PROFILE);
+const TASTE_PROFILE_KEY = "feed-moda:taste-profile:v1";
 
 const localFallback = [
   {
@@ -85,6 +87,10 @@ const refreshBtn = document.querySelector("#refreshBtn");
 const statsLine = document.querySelector("#statsLine");
 const toggleModeBtn = document.querySelector("#toggleModeBtn");
 const installBtn = document.querySelector("#installBtn");
+const lovesInput = document.querySelector("#lovesInput");
+const brandsInput = document.querySelector("#brandsInput");
+const avoidInput = document.querySelector("#avoidInput");
+const savePrefsBtn = document.querySelector("#savePrefsBtn");
 
 let deferredPrompt;
 
@@ -132,14 +138,19 @@ const extractImage = (entry) => {
 };
 
 async function fetchSource(source) {
-  const proxyEndpoints = [
-    source.rss,
+  const xmlEndpoints = [
     `https://api.allorigins.win/raw?url=${encodeURIComponent(source.rss)}`,
     `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(source.rss)}`,
+    source.rss,
+  ];
+
+  const jsonEndpoints = [
+    `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(source.rss)}`,
+    `https://rss2json.com/api.json?rss_url=${encodeURIComponent(source.rss)}`,
   ];
 
   let xmlText = "";
-  for (const endpoint of proxyEndpoints) {
+  for (const endpoint of xmlEndpoints) {
     try {
       const response = await fetch(endpoint);
       if (!response.ok) continue;
@@ -147,6 +158,36 @@ async function fetchSource(source) {
       if (xmlText?.trim()) break;
     } catch {
       // continua con il prossimo endpoint
+    }
+  }
+
+  if (!xmlText?.trim()) {
+    for (const endpoint of jsonEndpoints) {
+      try {
+        const response = await fetch(endpoint);
+        if (!response.ok) continue;
+        const json = await response.json();
+        const items = (json?.items || []).slice(0, 8);
+        if (!items.length) continue;
+
+        return items.map((entry) => ({
+          title: entry.title || "Untitled",
+          excerpt: `${cleanText(entry.description || entry.content || "").slice(0, 170)}…`,
+          url: entry.link || source.rss,
+          source: source.name,
+          topic: source.topic,
+          image:
+            entry.thumbnail ||
+            extractImage({
+              thumbnail: "",
+              description: entry.description || entry.content,
+            }),
+          tags: (entry.categories || []).filter(Boolean).slice(0, 3),
+          publishedAt: entry.pubDate || "",
+        }));
+      } catch {
+        // continua con il prossimo endpoint JSON
+      }
     }
   }
 
@@ -257,6 +298,33 @@ function drawFeed(items) {
   statsLine.textContent = `Top match: ${best}. Segnali di gusto attivi: ${TASTE_PROFILE.loves.length + TASTE_PROFILE.brands.length}.`;
 }
 
+const csvToList = (value) =>
+  value
+    .split(",")
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+
+function hydratePreferenceForm() {
+  lovesInput.value = TASTE_PROFILE.loves.join(", ");
+  brandsInput.value = TASTE_PROFILE.brands.join(", ");
+  avoidInput.value = TASTE_PROFILE.avoid.join(", ");
+}
+
+function loadPreferences() {
+  try {
+    const stored = localStorage.getItem(TASTE_PROFILE_KEY);
+    if (!stored) return;
+    const parsed = JSON.parse(stored);
+    TASTE_PROFILE = {
+      loves: Array.isArray(parsed?.loves) ? parsed.loves : DEFAULT_TASTE_PROFILE.loves,
+      brands: Array.isArray(parsed?.brands) ? parsed.brands : DEFAULT_TASTE_PROFILE.brands,
+      avoid: Array.isArray(parsed?.avoid) ? parsed.avoid : DEFAULT_TASTE_PROFILE.avoid,
+    };
+  } catch {
+    TASTE_PROFILE = structuredClone(DEFAULT_TASTE_PROFILE);
+  }
+}
+
 async function buildFeed() {
   statsLine.textContent = "Scansione fonti moda/design…";
 
@@ -297,8 +365,20 @@ installBtn.addEventListener("click", async () => {
   installBtn.hidden = true;
 });
 
+savePrefsBtn.addEventListener("click", () => {
+  TASTE_PROFILE = {
+    loves: csvToList(lovesInput.value),
+    brands: csvToList(brandsInput.value),
+    avoid: csvToList(avoidInput.value),
+  };
+  localStorage.setItem(TASTE_PROFILE_KEY, JSON.stringify(TASTE_PROFILE));
+  buildFeed();
+});
+
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js"));
 }
 
+loadPreferences();
+hydratePreferenceForm();
 buildFeed();

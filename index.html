@@ -43,6 +43,30 @@
         <p id="statsLine">Analisi gusti in corso…</p>
       </section>
 
+      <section class="card prefs-card" aria-label="Preferenze feed">
+        <div class="prefs-head">
+          <h3>Preferenze ranking</h3>
+          <p>Personalizza parole chiave e brand: il feed online verrà ordinato sui tuoi gusti.</p>
+        </div>
+        <div class="prefs-grid">
+          <label>
+            <span>Amo (separate da virgola)</span>
+            <input id="lovesInput" type="text" autocomplete="off" />
+          </label>
+          <label>
+            <span>Brand preferiti</span>
+            <input id="brandsInput" type="text" autocomplete="off" />
+          </label>
+          <label>
+            <span>Evita</span>
+            <input id="avoidInput" type="text" autocomplete="off" />
+          </label>
+        </div>
+        <div class="prefs-actions">
+          <button id="savePrefsBtn" class="ghost-btn">Salva preferenze</button>
+        </div>
+      </section>
+
       <main id="feedGrid" class="feed-grid" aria-live="polite"></main>
 
       <template id="cardTemplate">
