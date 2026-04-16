@@ -132,24 +132,89 @@ const extractImage = (entry) => {
 };
 
 async function fetchSource(source) {
-  const endpoint = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(source.rss)}&count=8`;
+  const proxyEndpoints = [
+    source.rss,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(source.rss)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(source.rss)}`,
+  ];
 
-  const response = await fetch(endpoint);
-  if (!response.ok) throw new Error(`RSS fetch failed: ${source.name}`);
+  let xmlText = "";
+  for (const endpoint of proxyEndpoints) {
+    try {
+      const response = await fetch(endpoint);
+      if (!response.ok) continue;
+      xmlText = await response.text();
+      if (xmlText?.trim()) break;
+    } catch {
+      // continua con il prossimo endpoint
+    }
+  }
 
-  const data = await response.json();
-  const items = data.items || [];
+  if (!xmlText?.trim()) throw new Error(`RSS fetch failed: ${source.name}`);
 
-  return items.map((entry) => ({
-    title: entry.title,
-    excerpt: cleanText(entry.description).slice(0, 170) + "…",
-    url: entry.link,
-    source: source.name,
-    topic: source.topic,
-    image: extractImage(entry),
-    tags: (entry.categories || []).slice(0, 3),
-    publishedAt: entry.pubDate,
-  }));
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(xmlText, "application/xml");
+  const hasError = xml.querySelector("parsererror");
+  if (hasError) throw new Error(`RSS parse failed: ${source.name}`);
+
+  const rssItems = [...xml.querySelectorAll("rss > channel > item")];
+  const atomItems = [...xml.querySelectorAll("feed > entry")];
+  const nodes = [...rssItems, ...atomItems].slice(0, 8);
+
+  const pickText = (parent, selectors) => {
+    for (const selector of selectors) {
+      const node = parent.querySelector(selector);
+      if (node?.textContent?.trim()) return node.textContent.trim();
+    }
+    return "";
+  };
+
+  const pickLink = (parent) => {
+    const rssLink = parent.querySelector("link")?.textContent?.trim();
+    if (rssLink?.startsWith("http")) return rssLink;
+
+    const atomHref =
+      parent.querySelector("link[rel='alternate']")?.getAttribute("href") ||
+      parent.querySelector("link")?.getAttribute("href");
+    if (atomHref?.startsWith("http")) return atomHref;
+
+    return source.rss;
+  };
+
+  return nodes.map((entry) => {
+    const title = pickText(entry, ["title"]) || "Untitled";
+    const description = pickText(entry, [
+      "description",
+      "content",
+      "content\\:encoded",
+      "summary",
+    ]);
+    const imageFromMedia =
+      entry.querySelector("media\\:content")?.getAttribute("url") ||
+      entry.querySelector("enclosure[type^='image']")?.getAttribute("url");
+
+    return {
+      title,
+      excerpt: `${cleanText(description).slice(0, 170)}…`,
+      url: pickLink(entry),
+      source: source.name,
+      topic: source.topic,
+      image:
+        imageFromMedia ||
+        extractImage({
+          thumbnail: "",
+          description,
+        }),
+      tags: [
+        ...new Set(
+          [...entry.querySelectorAll("category")]
+            .map((category) => category.textContent?.trim())
+            .filter(Boolean)
+        ),
+      ].slice(0, 3),
+      publishedAt: pickText(entry, ["pubDate", "published", "updated"]),
+    };
+  });
 }
 
 function drawFeed(items) {
@@ -198,10 +263,12 @@ async function buildFeed() {
   try {
     const collections = await Promise.allSettled(FEED_SOURCES.map(fetchSource));
     const ok = collections.filter((r) => r.status === "fulfilled").flatMap((r) => r.value);
+    const sourcesOk = collections.filter((r) => r.status === "fulfilled").length;
 
     if (ok.length < 5) throw new Error("Not enough remote items");
 
     drawFeed(ok);
+    statsLine.textContent = `Feed live online: ${sourcesOk}/${FEED_SOURCES.length} fonti aggiornate ora.`;
   } catch {
     drawFeed(localFallback);
     statsLine.textContent = "Modalità offline editoriale: feed curato locale (fonti remote non disponibili).";
